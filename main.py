@@ -3,14 +3,10 @@ import discord
 import logging
 from discord.ext import commands
 
-# ──────────────────────────────────────────
-# LOGGING (ANTI ERROR DIAM-DIAM)
-# ──────────────────────────────────────────
+# LOG
 logging.basicConfig(level=logging.INFO)
 
-# ──────────────────────────────────────────
-# INTENTS (LEBIH AMAN)
-# ──────────────────────────────────────────
+# INTENTS
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
@@ -18,67 +14,62 @@ intents.voice_states = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# ──────────────────────────────────────────
-# GLOBAL DATA
-# ──────────────────────────────────────────
 user_selections = {}
 temp_voice_channels = set()
 
 CREATE_CHANNEL_NAME = "➕ Buat Voice Channel"
 
-# ──────────────────────────────────────────
-# REGISTER SYSTEM
-# ──────────────────────────────────────────
+# ================= REGISTER =================
 
-class RegisterModal(discord.ui.Modal, title="📋 Registrasi Member"):
-    nama = discord.ui.TextInput(label="Nama", required=True)
-    asal = discord.ui.TextInput(label="Asal", required=True)
-    ign = discord.ui.TextInput(label="Nick In Game", required=True)
-    rank = discord.ui.TextInput(label="Rank", required=True)
+class RegisterModal(discord.ui.Modal, title="📋 Registrasi"):
+    nama = discord.ui.TextInput(label="Nama")
+    asal = discord.ui.TextInput(label="Asal")
+    ign = discord.ui.TextInput(label="Nick In Game")
+    rank = discord.ui.TextInput(label="Rank")
 
     async def on_submit(self, interaction: discord.Interaction):
-        user_id = interaction.user.id
-        data = user_selections.get(user_id, {})
+        await interaction.response.defer(ephemeral=True)
 
-        device = data.get("device", "📱Mobile")
-        role_game = data.get("role", "⚡Rusher")
-
-        # Set nickname
         try:
-            await interaction.user.edit(nick=self.ign.value)
-        except:
-            pass
+            data = user_selections.get(interaction.user.id, {})
+            device = data.get("device", "📱Mobile")
+            role_game = data.get("role", "⚡Rusher")
 
-        # Add roles
-        guild = interaction.guild
-        for role_name in ["🤝New Member", device, role_game]:
-            role = discord.utils.get(guild.roles, name=role_name)
-            if role:
-                await interaction.user.add_roles(role)
+            guild = interaction.guild
 
-        # Kirim ke announcement
-        channel = discord.utils.get(guild.text_channels, name="announcement")
-        if channel:
-            embed = discord.Embed(
-                title="📢 MEMBER BARU MASUK!",
-                color=discord.Color.red()
-            )
-            embed.add_field(name="👤 Nama", value=self.nama.value)
-            embed.add_field(name="🌍 Asal", value=self.asal.value)
-            embed.add_field(name="🎮 IGN", value=self.ign.value)
-            embed.add_field(name="🏆 Rank", value=self.rank.value)
-            embed.add_field(name="📱 Device", value=device)
-            embed.add_field(name="🎯 Role", value=role_game)
-            embed.set_thumbnail(url=interaction.user.display_avatar.url)
+            # set nickname
+            try:
+                await interaction.user.edit(nick=self.ign.value)
+            except:
+                pass
 
-            await channel.send(embed=embed)
+            # roles
+            for role_name in ["🤝New Member", device, role_game]:
+                role = discord.utils.get(guild.roles, name=role_name)
+                if role:
+                    await interaction.user.add_roles(role)
 
-        user_selections.pop(user_id, None)
+            # kirim ke announcement
+            channel = discord.utils.get(guild.text_channels, name="announcement")
+            if channel:
+                embed = discord.Embed(
+                    title="📢 MEMBER BARU!",
+                    color=discord.Color.red()
+                )
+                embed.add_field(name="Nama", value=self.nama.value)
+                embed.add_field(name="Asal", value=self.asal.value)
+                embed.add_field(name="IGN", value=self.ign.value)
+                embed.add_field(name="Rank", value=self.rank.value)
+                embed.add_field(name="Device", value=device)
+                embed.add_field(name="Role", value=role_game)
 
-        await interaction.response.send_message(
-            "✅ Registrasi berhasil! Welcome 🔥",
-            ephemeral=True
-        )
+                await channel.send(embed=embed)
+
+            await interaction.followup.send("✅ Registrasi berhasil!", ephemeral=True)
+
+        except Exception as e:
+            print("ERROR:", e)
+            await interaction.followup.send("❌ Terjadi error!", ephemeral=True)
 
 
 class SelectionView(discord.ui.View):
@@ -94,8 +85,8 @@ class SelectionView(discord.ui.View):
         ],
     )
     async def device(self, interaction, select):
-        user_selections[interaction.user.id]["device"] = select.values[0]
         await interaction.response.defer()
+        user_selections[interaction.user.id]["device"] = select.values[0]
 
     @discord.ui.select(
         placeholder="Pilih Role",
@@ -106,8 +97,8 @@ class SelectionView(discord.ui.View):
         ],
     )
     async def role(self, interaction, select):
-        user_selections[interaction.user.id]["role"] = select.values[0]
         await interaction.response.defer()
+        user_selections[interaction.user.id]["role"] = select.values[0]
 
     @discord.ui.button(label="Isi Data", style=discord.ButtonStyle.green)
     async def isi(self, interaction, button):
@@ -120,8 +111,9 @@ class RegisterPanel(discord.ui.View):
 
     @discord.ui.button(label="REGISTER", style=discord.ButtonStyle.primary, custom_id="register_btn")
     async def register(self, interaction, button):
-        await interaction.response.send_message(
-            "Pilih dulu device & role ya",
+        await interaction.response.defer(ephemeral=True)
+        await interaction.followup.send(
+            "Pilih device & role dulu",
             view=SelectionView(interaction.user.id),
             ephemeral=True
         )
@@ -130,7 +122,7 @@ class RegisterPanel(discord.ui.View):
 async def send_panel(channel):
     embed = discord.Embed(
         title="🔥 BLOOD STRIKE REGISTER",
-        description="Klik tombol di bawah untuk daftar",
+        description="Klik tombol untuk daftar",
         color=discord.Color.red()
     )
     await channel.send(embed=embed, view=RegisterPanel())
@@ -140,14 +132,11 @@ async def send_panel(channel):
 async def setup(ctx):
     await send_panel(ctx.channel)
 
-# ──────────────────────────────────────────
-# AUTO VOICE
-# ──────────────────────────────────────────
+# ================= VOICE =================
 
 @bot.event
 async def on_voice_state_update(member, before, after):
 
-    # Buat channel baru
     if after.channel and after.channel.name == CREATE_CHANNEL_NAME:
         category = after.channel.category
 
@@ -159,15 +148,12 @@ async def on_voice_state_update(member, before, after):
         temp_voice_channels.add(vc.id)
         await member.move_to(vc)
 
-    # Hapus kalau kosong
     if before.channel and before.channel.id in temp_voice_channels:
         if len(before.channel.members) == 0:
             await before.channel.delete()
             temp_voice_channels.remove(before.channel.id)
 
-# ──────────────────────────────────────────
-# READY
-# ──────────────────────────────────────────
+# ================= READY =================
 
 @bot.event
 async def on_ready():
@@ -180,17 +166,13 @@ async def on_ready():
         if channel:
             await send_panel(channel)
 
-# ──────────────────────────────────────────
-# ERROR HANDLER
-# ──────────────────────────────────────────
+# ================= ERROR =================
 
 @bot.event
 async def on_error(event, *args, **kwargs):
-    print(f"Error di event: {event}")
+    print("ERROR EVENT:", event)
 
-# ──────────────────────────────────────────
-# RUN
-# ──────────────────────────────────────────
+# ================= RUN =================
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 

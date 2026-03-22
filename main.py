@@ -84,13 +84,13 @@ class RegisterModal(discord.ui.Modal, title="📋 Registrasi Member"):
                 embed.add_field(name="📱 Device", value=device, inline=True)
                 embed.add_field(name="🎯 Role", value=role_game, inline=True)
                 embed.set_thumbnail(url=interaction.user.display_avatar.url)
-                embed.set_footer(text="Welcome ke clan Blood Strike! 🔥")
+                embed.set_footer(text="Welcome TO Night Fury! 🔥")
                 await channel.send(embed=embed)
 
             user_selections.pop(user_id, None)
 
             await interaction.followup.send(  # ✅ FIX
-                "✅ **Registrasi berhasil!** Selamat bergabung di Blood Strike! 🔥",
+                "✅ **Registrasi berhasil!** Selamat bergabung di Night Fury! 🔥",
                 ephemeral=True,
             )
 
@@ -176,9 +176,9 @@ class RegisterPanel(discord.ui.View):
 
 async def send_register_panel(channel: discord.TextChannel):
     embed = discord.Embed(
-        title="🔥 Blood Strike — Registrasi Member",
+        title="🔥 Night Fury — Registrasi Member",
         description=(
-            "Selamat datang di **Blood Strike Clan**!\n\n"
+            "Selamat datang di **Night Fury Clan**!\n\n"
             "Klik tombol **REGISTER** di bawah untuk mendaftar sebagai member resmi.\n\n"
             "📋 **Data yang akan diisi:**\n"
             "┣ 👤 Nama\n"
@@ -190,7 +190,7 @@ async def send_register_panel(channel: discord.TextChannel):
         ),
         color=discord.Color.red(),
     )
-    embed.set_footer(text="Blood Strike Clan • Sistem Registrasi Modern")
+    embed.set_footer(text="Night Fury Clan • Sistem Registrasi Modern")
     await channel.send(embed=embed, view=RegisterPanel())
 
 

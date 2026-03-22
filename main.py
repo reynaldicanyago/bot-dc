@@ -19,30 +19,31 @@ VOICE_CATEGORY_NAME = "🎧 | VOICE"
 # REGISTRATION SYSTEM
 # ──────────────────────────────────────────
 
+
 class RegisterModal(discord.ui.Modal, title="📋 Registrasi Member"):
     nama = discord.ui.TextInput(
         label="Nama",
         placeholder="Masukkan nama lengkap kamu",
         required=True,
-        max_length=50
+        max_length=50,
     )
     asal = discord.ui.TextInput(
         label="Asal",
         placeholder="Masukkan kota / daerah asal kamu",
         required=True,
-        max_length=50
+        max_length=50,
     )
     ign = discord.ui.TextInput(
         label="Nick In Game",
         placeholder="Masukkan nick in game kamu",
         required=True,
-        max_length=50
+        max_length=50,
     )
     rank = discord.ui.TextInput(
         label="Rank",
         placeholder="Masukkan rank kamu saat ini",
         required=True,
-        max_length=50
+        max_length=50,
     )
 
     async def on_submit(self, interaction: discord.Interaction):
@@ -51,8 +52,8 @@ class RegisterModal(discord.ui.Modal, title="📋 Registrasi Member"):
         try:
             user_id = interaction.user.id
             data = user_selections.get(user_id, {})
-            device = data.get("device", "Mobile")
-            role_game = data.get("role", "Rusher")
+            device = data.get("device", "📱Mobile")
+            role_game = data.get("role", "⚡Rusher")
 
             # Set nickname to IGN
             try:
@@ -62,15 +63,20 @@ class RegisterModal(discord.ui.Modal, title="📋 Registrasi Member"):
 
             # Assign roles
             guild = interaction.guild
-            for role_name in ["New Member", device, role_game]:
+            for role_name in ["🤝New Member", device, role_game]:
                 role = discord.utils.get(guild.roles, name=role_name)
                 if role:
                     await interaction.user.add_roles(role)
 
             # Post to #announcement
-            channel = discord.utils.get(guild.text_channels, name="announcement")
+            channel = next(
+                (c for c in guild.text_channels if "announcement" in c.name.lower()),
+                None
+            )
             if channel:
-                embed = discord.Embed(title="📢 MEMBER BARU MASUK!", color=discord.Color.red())
+                embed = discord.Embed(
+                    title="📢 MEMBER BARU MASUK!", color=discord.Color.red()
+                )
                 embed.add_field(name="👤 Nama", value=self.nama.value, inline=True)
                 embed.add_field(name="🌍 Asal", value=self.asal.value, inline=True)
                 embed.add_field(name="🎮 Nick In Game", value=self.ign.value, inline=True)
@@ -85,7 +91,7 @@ class RegisterModal(discord.ui.Modal, title="📋 Registrasi Member"):
 
             await interaction.followup.send(  # ✅ FIX
                 "✅ **Registrasi berhasil!** Selamat bergabung di Blood Strike! 🔥",
-                ephemeral=True
+                ephemeral=True,
             )
 
         except Exception as e:
@@ -108,35 +114,41 @@ class RegisterModal(discord.ui.Modal, title="📋 Registrasi Member"):
 class SelectionView(discord.ui.View):
     def __init__(self, user_id: int):
         super().__init__(timeout=300)
-        user_selections[user_id] = {"device": "Mobile", "role": "Rusher"}
+        user_selections[user_id] = {"device": "📱Mobile", "role": "⚡Rusher"}
 
     @discord.ui.select(
         placeholder="📱 Pilih Device kamu",
         options=[
-            discord.SelectOption(label="Mobile", emoji="📱", description="Bermain di HP"),
-            discord.SelectOption(label="PC", emoji="🖥️", description="Bermain di PC / Emulator"),
-        ]
+            discord.SelectOption(label="📱Mobile", description="Bermain di HP"),
+            discord.SelectOption(label="🖥PC", description="Bermain di PC / Emulator"),
+        ],
     )
-    async def select_device(self, interaction: discord.Interaction, select: discord.ui.Select):
+    async def select_device(
+        self, interaction: discord.Interaction, select: discord.ui.Select
+    ):
         user_selections.setdefault(interaction.user.id, {})["device"] = select.values[0]
         await interaction.response.defer()
 
     @discord.ui.select(
         placeholder="🎯 Pilih Role Gameplay",
         options=[
-            discord.SelectOption(label="Sniper", emoji="🎯", description="Jarak jauh, presisi tinggi"),
-            discord.SelectOption(label="Rusher", emoji="⚡", description="Agresif dan cepat"),
-            discord.SelectOption(label="Support", emoji="🛡️", description="Mendukung tim"),
-            discord.SelectOption(label="Kang Deploy", emoji="💣", description="Masuk duluan, buka jalan"),
-            discord.SelectOption(label="Scout", emoji="👀", description="Pengintai, informasi tim"),
-        ]
+            discord.SelectOption(label="🎯Sniper", description="Jarak jauh, presisi tinggi"),
+            discord.SelectOption(label="⚡Rusher", description="Agresif dan cepat"),
+            discord.SelectOption(label="🛡Support", description="Mendukung tim"),
+            discord.SelectOption(label="🧠Kang Deploy", description="Specialist deploy"),
+            discord.SelectOption(label="👀Scout", description="Pengintai, informasi tim"),
+        ],
     )
-    async def select_role(self, interaction: discord.Interaction, select: discord.ui.Select):
+    async def select_role(
+        self, interaction: discord.Interaction, select: discord.ui.Select
+    ):
         user_selections.setdefault(interaction.user.id, {})["role"] = select.values[0]
         await interaction.response.defer()
 
     @discord.ui.button(label="📝 Isi Data Diri", style=discord.ButtonStyle.green, row=2)
-    async def open_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def open_modal(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         await interaction.response.send_modal(RegisterModal())
 
 
@@ -147,16 +159,18 @@ class RegisterPanel(discord.ui.View):
     @discord.ui.button(
         label="📋 REGISTER",
         style=discord.ButtonStyle.primary,
-        custom_id="register_panel_button"
+        custom_id="register_panel_button",
     )
-    async def register(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def register(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         view = SelectionView(interaction.user.id)
 
         await interaction.response.defer(ephemeral=True)  # ✅ FIX
         await interaction.followup.send(
             "**Langkah 1:** Pilih device dan role kamu, lalu klik **Isi Data Diri** untuk melanjutkan.",
             view=view,
-            ephemeral=True
+            ephemeral=True,
         )
 
 
@@ -174,7 +188,7 @@ async def send_register_panel(channel: discord.TextChannel):
             "┣ 📱 Device\n"
             "┗ 🎯 Role Gameplay"
         ),
-        color=discord.Color.red()
+        color=discord.Color.red(),
     )
     embed.set_footer(text="Blood Strike Clan • Sistem Registrasi Modern")
     await channel.send(embed=embed, view=RegisterPanel())
@@ -189,13 +203,15 @@ async def setup(ctx):
 # AUTO VOICE CHANNEL SYSTEM
 # ──────────────────────────────────────────
 
+
 @bot.event
-async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+async def on_voice_state_update(
+    member: discord.Member, before: discord.VoiceState, after: discord.VoiceState
+):
     if after.channel and after.channel.name == CREATE_CHANNEL_NAME:
         category = after.channel.category
         new_channel = await member.guild.create_voice_channel(
-            name=f"{member.display_name}",
-            category=category
+            name=f"{member.display_name}", category=category
         )
         temp_voice_channels.add(new_channel.id)
         await member.move_to(new_channel)
@@ -209,6 +225,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
 # ──────────────────────────────────────────
 # STARTUP
 # ──────────────────────────────────────────
+
 
 @bot.event
 async def on_ready():
